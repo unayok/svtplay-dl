@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
+
 import sys
 if sys.version_info > (3, 0):
     from urllib.request import Request, urlopen
@@ -23,8 +25,8 @@ import logging
 import base64
 import struct
 import binascii
-from sites import *
-from utils import *
+from .sites import *
+from .utils import *
 
 __version__ = "0.8.2012.12.23"
 
@@ -329,6 +331,3 @@ def main():
 
     url = args[0]
     get_media(url, options)
-
-if __name__ == "__main__":
-    main()

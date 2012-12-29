@@ -1,10 +1,12 @@
+from __future__ import absolute_import
+
 import struct
 import xml.etree.ElementTree as ET
 import base64
 import re
 import logging
 import binascii
-from utils import *
+from ..utils import *
 
 log = logging.getLogger('svtplay_dl')
 def readbyte(data, pos):

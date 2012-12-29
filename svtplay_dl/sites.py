@@ -1,10 +1,12 @@
+from __future__ import absolute_import
+
 import re
 import json
-from utils import *
-from streams.hds import *
-from streams.hls import *
-from streams.http import *
-from streams.rtmp import *
+from .utils import *
+from .streams.hds import *
+from .streams.hls import *
+from .streams.http import *
+from .streams.rtmp import *
 
 class Justin():
     def get(self, options, url):

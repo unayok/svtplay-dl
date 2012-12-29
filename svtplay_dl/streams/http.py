@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import sys
 if sys.version_info > (3, 0):
     from urllib.request import Request, urlopen
@@ -11,7 +13,7 @@ else:
 import re
 import logging
 import time
-from utils import *
+from ..utils import *
 
 log = logging.getLogger('svtplay_dl')
 
