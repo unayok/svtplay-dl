@@ -7,14 +7,8 @@ from streams.http import *
 from streams.rtmp import *
 
 class Justin():
-    def __init__(self, options, output, live, resume):
-        self.options = options
-        self.output = output
-        self.live = live
-        self.resume = resume
-
-    def get(self, url):
-        other = "-a ondemand"
+    def get(self, options, url):
+        options.other = "-a ondemand"
         data = get_http_data(url)
         data = re.sub("<(\d+)", "<_\g<1>", data)
         data = re.sub("</(\d+)", "</_\g<1>", data)
@@ -34,32 +28,20 @@ class Justin():
                 except AttributeError:
                     None
 
-        test = select_quality(self.options, streams)
-        other = "-j '%s' -W %s" % (test["token"], self.resume)
-        self.resume = False
-        download_rtmp(self.options, test["url"], self.output, self.live, other, self.resume)
+        test = select_quality(options, streams)
+        options.other = "-j '%s' -W %s" % (test["token"], options.resume)
+        options.resume = False
+        download_rtmp(options, test["url"], options.output, options.live, options.other, options.resume)
 
 class Justin2():
-    def __init__(self, options, output, live, resume):
-        self.options = options
-        self.output = output
-        self.live = live
-        self.resume = resume
-
-    def get(self, url):
+    def get(self, options, url):
         data = get_http_data(url)
         xml = ET.XML(data)
         url = xml.find("archive").find("video_file_url").text
 
-        download_http(url, self.output)
+        download_http(url, options.output)
 
 class Hbo():
-    def __init__(self, options, output, live, resume):
-        self.options = options
-        self.output = output
-        self.live = live
-        self.resume = resume
-
     def get(self, url):
         data = get_http_data(url)
         xml = ET.XML(data)
@@ -78,51 +60,31 @@ class Hbo():
             stream["path"] = i.find("tv14").find("path").text
             streams[int(i.attrib["width"])] = stream
 
-        test = select_quality(self.options, streams)
+        test = select_quality(options, streams)
 
-        download_rtmp(self.options, test["path"], self.output, self.live, "", self.resume)
+        download_rtmp(options, test["path"], options.output, options.live, "", options.resume)
 
 class Sr():
-    def __init__(self, options, output, live, other, resume):
-        self.options = options
-        self.output = output
-        self.live = live
-        self.other = other
-        self.resume = resume
-
-    def get(self, url):
-        url = url + self.other
+    def get(self, options, url):
+        url = url + options.other
         data = get_http_data(url)
         xml = ET.XML(data)
         url = xml.find("entry").find("ref").attrib["href"]
 
-        download_http(url, self.output)
+        download_http(url, options.output)
 
 class Urplay():
-    def __init__(self, options, output, live, resume):
-        self.options = options
-        self.output = output
-        self.live = live
-        self.resume = resume
-
-    def get(self, url):
-        other = "-a ondemand"
+    def get(self, options, url):
         data = get_http_data(url)
         match = re.search('file=(.*)\&plugins', data)
         if match:
             path = "mp" + match.group(1)[-1] + ":" + match.group(1)
-            other = "-a ondemand -y %s" % path
+            options.other = "-a ondemand -y %s" % path
 
-            download_rtmp(self.options, "rtmp://streaming.ur.se/", self.output, self.live, other, self.resume)
+            download_rtmp(options, "rtmp://streaming.ur.se/", options.output, options.live, options.other, options.resume)
 
 class Qbrick():
-    def __init__(self, options, output, live, resume):
-        self.options = options
-        self.output = output
-        self.live = live
-        self.resume = resume
-
-    def get(self, url):
+    def get(self, options, url):
         data = get_http_data(url)
         xml = ET.XML(data)
         server = xml.find("head").find("meta").attrib["base"]
@@ -135,19 +97,13 @@ class Qbrick():
         for i in sa:
             streams[int(i.attrib["system-bitrate"])] = i.attrib["src"]
 
-        path = select_quality(self.options, streams)
+        path = select_quality(options, streams)
 
-        other = "-y %s" % path
-        download_rtmp(self.options, server, self.output, self.live, other, self.resume)
+        options.other = "-y %s" % path
+        download_rtmp(options, server, options.output, options.live, options.other, options.resume)
 
 class Kanal5():
-    def __init__(self, options, output, live, resume):
-        self.options = options
-        self.output = output
-        self.live = live
-        self.resume = resume
-
-    def get(self, url):
+    def get(self, options, url):
         data = json.loads(get_http_data(url))
         self.live = data["isLive"]
         steambaseurl = data["streamBaseUrl"]
@@ -158,23 +114,16 @@ class Kanal5():
             stream["source"] = i["source"]
             streams[int(i["bitrate"])] = stream
 
-        test = select_quality(self.options, streams)
+        test = select_quality(options, streams)
 
         filename = test["source"]
         match = re.search("^(.*):", filename)
-        self.output  = "%s.%s" % (self.output, match.group(1))
-        other = "-W %s -y %s " % ("http://www.kanal5play.se/flash/StandardPlayer.swf", filename)
-        download_rtmp(self.options, steambaseurl, self.output, self.live, other, self.resume)
+        options.output  = "%s.%s" % (options.output, match.group(1))
+        options.other = "-W %s -y %s " % ("http://www.kanal5play.se/flash/StandardPlayer.swf", filename)
+        download_rtmp(options, steambaseurl, options.output, options.live, options.other, options.resume)
 
 class Kanal9():
-    def __init__(self, options, output, live, other, resume):
-        self.options = options
-        self.output = output
-        self.live = live
-        self.other = other
-        self.resume = resume
-
-    def get(self, url):
+    def get(self, options, url):
         try:
             from pyamf import remoting
         except ImportError:
@@ -198,21 +147,15 @@ class Kanal9():
             stream["uri"] = i["defaultURL"]
             streams[i["encodingRate"]] = stream
 
-        test = select_quality(self.options, streams)
+        test = select_quality(options, streams)
 
         filename = test["uri"]
         match = re.search("(rtmp[e]{0,1}://.*)\&(.*)$", filename)
-        other = "-W %s -y %s " % ("http://admin.brightcove.com/viewer/us1.25.04.01.2011-05-24182704/connection/ExternalConnection_2.swf", match.group(2))
-        download_rtmp(self.options, match.group(1), self.output, self.live, other, self.resume)
+        options.other = "-W %s -y %s " % ("http://admin.brightcove.com/viewer/us1.25.04.01.2011-05-24182704/connection/ExternalConnection_2.swf", match.group(2))
+        download_rtmp(options, match.group(1), options.output, options.live, options.other, options.resume)
 
 class Expressen():
-    def __init__(self, options, output, live, resume):
-        self.options = options
-        self.output = output
-        self.live = live
-        self.resume = resume
-
-    def get(self, url):
+    def get(self, options, url):
         other = ""
         data = get_http_data(url)
         xml = ET.XML(data)
@@ -226,52 +169,40 @@ class Expressen():
         for i in sa:
             streams[int(i.attrib["bitrate"])] = i.text
 
-        test = select_quality(self.options, streams)
+        test = select_quality(options, streams)
 
         filename = test
         match = re.search("rtmp://([0-9a-z\.]+/[0-9]+/)(.*).flv", filename)
 
         filename = "rtmp://%s" % match.group(1)
-        other = "-y %s" % match.group(2)
+        options.other = "-y %s" % match.group(2)
 
-        download_rtmp(self.options, filename, self.output, self.live, other, self.resume)
+        download_rtmp(options, filename, options.output, options.live, options.other, options.resume)
 
 class Aftonbladet():
-    def __init__(self, options, output, live, resume):
-        self.options = options
-        self.output = output
-        self.live = live
-        self.resume = resume
-
     def get(self, url, start):
         data = get_http_data(url)
         xml = ET.XML(data)
         url = xml.find("articleElement").find("mediaElement").find("baseUrl").text
         path = xml.find("articleElement").find("mediaElement").find("media").attrib["url"]
-        other = "-y %s" % path
+        options.other = "-y %s" % path
 
         if start > 0:
-            other = other + " -A %s" % str(start)
+            options.other = options.other + " -A %s" % str(start)
 
         if url == None:
             log.error("Can't find any video on that page")
             sys.exit(3)
 
         if url[0:4] == "rtmp":
-            download_rtmp(self.options, url, self.output, self.live, other, self.resume)
+            download_rtmp(options, url, options.output, options.live, options.other, options.resume)
         else:
             filename = url + path
-            download_http(filename, self.output)
+            download_http(filename, options.output)
 
 class Viaplay():
-    def __init__(self, options, output, live, resume):
-        self.options = options
-        self.output = output
-        self.live = live
-        self.resume = resume
-
-    def get(self, url):
-        other = ""
+    def get(self, options, url):
+        options.other = ""
         data = get_http_data(url)
         xml = ET.XML(data)
         filename = xml.find("Product").find("Videos").find("Video").find("Url").text
@@ -281,17 +212,11 @@ class Viaplay():
             xml = ET.XML(data)
             filename = xml.find("Url").text
 
-        other = "-W http://flvplayer.viastream.viasat.tv/play/swf/player110516.swf?rnd=1315434062"
-        download_rtmp(self.options, filename, self.output, self.live, other, self.resume)
+        options.other = "-W http://flvplayer.viastream.viasat.tv/play/swf/player110516.swf?rnd=1315434062"
+        download_rtmp(options, filename, options.output, options.live, options.other, options.resume)
 
 class Tv4play():
-    def __init__(self, options, output, live, resume):
-        self.options = options
-        self.output = output
-        self.live = live
-        self.resume = resume
-
-    def get(self, url):
+    def get(self, options, url):
         data = get_http_data(url)
         xml = ET.XML(data)
         ss = xml.find("items")
@@ -315,37 +240,31 @@ class Tv4play():
         if len(streams) == 1:
             test = streams[streams.keys()[0]]
         else:
-            test = select_quality(self.options, streams)
+            test = select_quality(options, streams)
 
         swf = "http://www.tv4play.se/flash/tv4playflashlets.swf"
-        other = "-W %s -y %s" % (swf, test["path"])
+        options.other = "-W %s -y %s" % (swf, test["path"])
 
         if test["uri"][0:4] == "rtmp":
-            download_rtmp(self.options, test["uri"], self.output, self.live, other, self.resume)
+            download_rtmp(options, test["uri"], options.output, options.live, options.other, options.resume)
         elif test["uri"][len(test["uri"])-3:len(test["uri"])] == "f4m":
             match = re.search("\/se\/secure\/", test["uri"])
             if match:
                 log.error("This stream is encrypted. Use --hls option")
                 sys.exit(2)
             manifest = "%s?hdcore=2.8.0&g=hejsan" % test["path"]
-            download_hds(self.options, manifest, self.output, swf)
+            download_hds(options, manifest, options.output, swf)
 
 class Svtplay():
-    def __init__(self, options, output, live, resume):
-        self.options = options
-        self.output = output
-        self.live = live
-        self.resume = resume
-
-    def get(self, url):
+    def get(self, options, url):
         url = url + "?type=embed"
         data = get_http_data(url)
         match = re.search("value=\"(/(public)?(statiskt)?/swf/video/svtplayer-[0-9\.]+swf)\"", data)
         swf = "http://www.svtplay.se" + match.group(1)
-        other = "-W " + swf
+        options.other = "-W " + swf
         url = url + "&output=json&format=json"
         data = json.loads(get_http_data(url))
-        self.live = data["video"]["live"]
+        options.live = data["video"]["live"]
         streams = {}
 
         for i in data["video"]["videoReferences"]:
@@ -364,18 +283,18 @@ class Svtplay():
         elif len(streams) == 1:
             test = streams[streams.keys()[0]]
         else:
-            test = select_quality(self.options, streams)
+            test = select_quality(options, streams)
 
         if test["url"][0:4] == "rtmp":
-            download_rtmp(self.options, test["url"], self.output, self.live, other, self.resume)
+            download_rtmp(options, test["url"], options.output, options.live, options.other, options.resume)
         elif self.options.hls:
-            download_hls(self.options, test["url"], self.output, self.live, other)
+            download_hls(options, test["url"], options.output, options.live, options.other)
         elif test["url"][len(test["url"])-3:len(test["url"])] == "f4m":
             match = re.search("\/se\/secure\/", test["url"])
             if match:
                 log.error("This stream is encrypted. Use --hls option")
                 sys.exit(2)
             manifest = "%s?hdcore=2.8.0&g=hejsan" % test["url"]
-            download_hds(self.options, manifest, self.output, swf)
+            download_hds(options, manifest, options.output, swf)
         else:
-            download_http(test["url"], self.output)
+            download_http(test["url"], options.output)
