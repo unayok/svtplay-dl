@@ -5,31 +5,31 @@ import shlex
 
 log = logging.getLogger('svtplay_dl')
 
-def download_rtmp(options, url, output, live, extra_args, resume):
+def download_rtmp(options, url):
     """ Get the stream from RTMP """
     args = []
-    if live:
+    if options.live:
         args.append("-v")
 
-    if resume:
+    if options.resume:
         args.append("-e")
 
     extension = re.search("(\.[a-z0-9]+)$", url)
-    if output != "-":
+    if options.output != "-":
         if not extension:
-            extension = re.search("-y (.+):[-_a-z0-9\/]", extra_args)
+            extension = re.search("-y (.+):[-_a-z0-9\/]", options.other)
             if not extension:
-                output = output + ".flv"
+                options.output = options.output + ".flv"
             else:
-                output = output + "." + extension.group(1)
+                options.output = options.output + "." + extension.group(1)
         else:
-            output = output + extension.group(1)
-        log.info("Outfile: %s", output)
-        args += ["-o", output]
-    if options.silent or output == "-":
+            options.output = options.output + extension.group(1)
+        log.info("Outfile: %s", options.output)
+        args += ["-o", options.output]
+    if options.silent or options.output == "-":
         args.append("-q")
-    if extra_args:
-        args += shlex.split(extra_args)
+    if options.other:
+        args += shlex.split(options.other)
     command = ["rtmpdump", "-r", url] + args
     try:
         subprocess.call(command)

@@ -181,7 +181,7 @@ def decode_f4f(fragID, fragData ):
             start  += tagLen + 11 + 4
     return start
 
-def download_hds(options, url, output, swf):
+def download_hds(options, url, swf):
     data = get_http_data(url)
     streams = {}
     bootstrap = {}
@@ -211,12 +211,12 @@ def download_hds(options, url, output, swf):
     baseurl = url[0:url.rfind("/")]
     i = 1
 
-    if output != "-":
-        extension = re.search("(\.[a-z0-9]+)$", output)
+    if options.output != "-":
+        extension = re.search("(\.[a-z0-9]+)$", options.output)
         if not extension:
-            output = output + ".flv"
-        log.info("Outfile: %s", output)
-        file_d = open(output, "wb")
+            options.output = options.output + ".flv"
+        log.info("Outfile: %s", options.output)
+        file_d = open(options.output, "wb")
     else:
         file_d = sys.stdout
 
@@ -233,6 +233,6 @@ def download_hds(options, url, output, swf):
         file_d.write(data[number:])
         i += 1
 
-    if output != "-":
+    if options.output != "-":
         file_d.close()
         progress_stream.write('\n')

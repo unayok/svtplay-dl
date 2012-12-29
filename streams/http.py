@@ -15,18 +15,18 @@ from utils import *
 
 log = logging.getLogger('svtplay_dl')
 
-def download_http(url, output):
+def download_http(options, url):
     """ Get the stream from HTTP """
     response = urlopen(url)
     total_size = response.info()['Content-Length']
     total_size = int(total_size)
     bytes_so_far = 0
-    if output != "-":
+    if options.output != "-":
         extension = re.search("(\.[a-z0-9]+)$", url)
         if extension:
-            output = output + extension.group(1)
-        log.info("Outfile: %s", output)
-        file_d = open(output,"wb")
+            options.output = options.output + extension.group(1)
+        log.info("Outfile: %s", options.output)
+        file_d = open(options.output,"wb")
     else:
         file_d = sys.stdout
 
@@ -45,5 +45,5 @@ def download_http(url, output):
                 lastprogress = now
                 progress(bytes_so_far, total_size)
 
-    if output != "-":
+    if options.output != "-":
         file_d.close()

@@ -31,7 +31,7 @@ class Justin():
         test = select_quality(options, streams)
         options.other = "-j '%s' -W %s" % (test["token"], options.resume)
         options.resume = False
-        download_rtmp(options, test["url"], options.output, options.live, options.other, options.resume)
+        download_rtmp(options, test["url"])
 
 class Justin2():
     def get(self, options, url):
@@ -62,7 +62,7 @@ class Hbo():
 
         test = select_quality(options, streams)
 
-        download_rtmp(options, test["path"], options.output, options.live, "", options.resume)
+        download_rtmp(options, test["path"])
 
 class Sr():
     def get(self, options, url):
@@ -81,7 +81,7 @@ class Urplay():
             path = "mp" + match.group(1)[-1] + ":" + match.group(1)
             options.other = "-a ondemand -y %s" % path
 
-            download_rtmp(options, "rtmp://streaming.ur.se/", options.output, options.live, options.other, options.resume)
+            download_rtmp(options, "rtmp://streaming.ur.se/")
 
 class Qbrick():
     def get(self, options, url):
@@ -100,7 +100,7 @@ class Qbrick():
         path = select_quality(options, streams)
 
         options.other = "-y %s" % path
-        download_rtmp(options, server, options.output, options.live, options.other, options.resume)
+        download_rtmp(options, server)
 
 class Kanal5():
     def get(self, options, url):
@@ -120,7 +120,7 @@ class Kanal5():
         match = re.search("^(.*):", filename)
         options.output  = "%s.%s" % (options.output, match.group(1))
         options.other = "-W %s -y %s " % ("http://www.kanal5play.se/flash/StandardPlayer.swf", filename)
-        download_rtmp(options, steambaseurl, options.output, options.live, options.other, options.resume)
+        download_rtmp(options, steambaseurl)
 
 class Kanal9():
     def get(self, options, url):
@@ -152,7 +152,7 @@ class Kanal9():
         filename = test["uri"]
         match = re.search("(rtmp[e]{0,1}://.*)\&(.*)$", filename)
         options.other = "-W %s -y %s " % ("http://admin.brightcove.com/viewer/us1.25.04.01.2011-05-24182704/connection/ExternalConnection_2.swf", match.group(2))
-        download_rtmp(options, match.group(1), options.output, options.live, options.other, options.resume)
+        download_rtmp(options, match.group(1))
 
 class Expressen():
     def get(self, options, url):
@@ -177,7 +177,7 @@ class Expressen():
         filename = "rtmp://%s" % match.group(1)
         options.other = "-y %s" % match.group(2)
 
-        download_rtmp(options, filename, options.output, options.live, options.other, options.resume)
+        download_rtmp(options, filename)
 
 class Aftonbladet():
     def get(self, url, start):
@@ -195,10 +195,10 @@ class Aftonbladet():
             sys.exit(3)
 
         if url[0:4] == "rtmp":
-            download_rtmp(options, url, options.output, options.live, options.other, options.resume)
+            download_rtmp(options, url)
         else:
             filename = url + path
-            download_http(filename, options.output)
+            download_http(options, filename)
 
 class Viaplay():
     def get(self, options, url):
@@ -213,7 +213,7 @@ class Viaplay():
             filename = xml.find("Url").text
 
         options.other = "-W http://flvplayer.viastream.viasat.tv/play/swf/player110516.swf?rnd=1315434062"
-        download_rtmp(options, filename, options.output, options.live, options.other, options.resume)
+        download_rtmp(options, filename)
 
 class Tv4play():
     def get(self, options, url):
@@ -253,7 +253,7 @@ class Tv4play():
                 log.error("This stream is encrypted. Use --hls option")
                 sys.exit(2)
             manifest = "%s?hdcore=2.8.0&g=hejsan" % test["path"]
-            download_hds(options, manifest, options.output, swf)
+            download_hds(options, manifest, swf)
 
 class Svtplay():
     def get(self, options, url):
@@ -295,6 +295,6 @@ class Svtplay():
                 log.error("This stream is encrypted. Use --hls option")
                 sys.exit(2)
             manifest = "%s?hdcore=2.8.0&g=hejsan" % test["url"]
-            download_hds(options, manifest, options.output, swf)
+            download_hds(options, manifest, swf)
         else:
-            download_http(test["url"], options.output)
+            download_http(options, test["url"])
