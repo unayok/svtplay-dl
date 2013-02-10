@@ -159,25 +159,30 @@ def readbox(data, pos):
     fragRunTableCount = readbyte(data, pos)
     pos += 1
     i = 0
+    fragruntables = []
     while i < fragRunTableCount:
         tmp = readboxtype(data, pos)
         boxtype = tmp[2]
         boxsize = tmp[1]
         pos = tmp[0]
         if boxtype == "afrt":
-            readafrtbox(data, pos)
+            frt = readafrtbox(data, pos)
             pos += boxsize
         i += 1
+        fragruntables.append(frt)
+    antal['fragruntables'] = fragruntables
     return antal
 
 def readafrtbox(data, pos):
-    version = readbyte(data, pos)
+    box = {}
+    box['version'] = readbyte(data, pos)
     pos += 1
-    flags = read24(data, pos)
+    box['flags'] = read24(data, pos)
     pos += 3
-    timescale = read32(data, pos)
+    box['timescale'] = read32(data, pos)
     pos += 4
     qualityentry = readbyte(data, pos)
+    box['qualityentry'] = qualityentry
     pos += 1
     i = 0
     while i < qualityentry:
@@ -186,8 +191,11 @@ def readafrtbox(data, pos):
         pos = temp[0]
         i += 1
     fragrunentrycount = read32(data, pos)
+    box['fragrunentrycount'] = fragrunentrycount
     pos += 4
     i = 0
+    fragruns = []
+    box['fragruns'] = fragruns
     while i < fragrunentrycount:
         firstfragment = read32(data, pos)
         pos += 4
@@ -196,6 +204,8 @@ def readafrtbox(data, pos):
         duration = read32(data, pos)
         pos += 4
         i += 1
+        fragruns.append((firstfragment, timestamp, duration))
+    return box
 
 def readasrtbox(data, pos):
     version = readbyte(data, pos)
@@ -280,15 +290,15 @@ def get_http_data(url, method="GET", header="", data=""):
     try:
         response = urlopen(request)
     except HTTPError as e:
-        log.error("Something wrong with that url")
+        log.error("Something wrong with url " + url )
         log.error("Error code: %s" % e.code)
         sys.exit(5)
     except URLError as e:
-        log.error("Something wrong with that url")
+        log.error("Something wrong with url " + url )
         log.error("Error code: %s" % e.reason)
         sys.exit(5)
     except ValueError as e:
-        log.error("Try adding http:// before the url")
+        log.error("Try adding http:// before the url " + url )
         sys.exit(5)
     if sys.version_info > (3, 0):
         data = response.read()
@@ -345,6 +355,8 @@ def download_hds(options, url, swf=None):
     for i in mediaIter:
         streams[int(i.attrib["bitrate"])] = {"url": i.attrib["url"], "bootstrapInfoId": i.attrib["bootstrapInfoId"], "metadata": i.find("{http://ns.adobe.com/f4m/1.0}metadata").text}
 
+    log.debug("bitrates available: " + str(streams.keys()))
+
     test = select_quality(options, streams)
 
     bootstrap = base64.b64decode(bootstrap[test["bootstrapInfoId"]])
@@ -353,7 +365,6 @@ def download_hds(options, url, swf=None):
         antal = readbox(bootstrap, box[0])
 
     baseurl = url[0:url.rfind("/")]
-    i = 1
 
     if options.output != "-":
         extension = re.search("(\.[a-z0-9]+)$", options.output)
@@ -370,8 +381,13 @@ def download_hds(options, url, swf=None):
     total = antal[1]["total"]
     start = time.time()
     estimated = ""
+    i = 1
+    try :
+        offset = antal["fragruntables"][0]["fragruns"][0][0] - 1
+    except KeyError :
+        offset = 0
     while i <= total:
-        url = "%s/%sSeg1-Frag%s" % (baseurl, test["url"], i)
+        url = "%s/%sSeg1-Frag%s" % (baseurl, test["url"], i + offset)
         if options.output != "-":
             progressbar(total, i, estimated)
         data = get_http_data(url)
@@ -521,6 +537,7 @@ def download_rtmp(options, url):
         args += shlex.split(options.other)
     command = ["rtmpdump", "-r", url] + args
     try:
+        log.debug(str(command))
         subprocess.call(command)
     except OSError as e:
         log.error("Could not execute rtmpdump: " + e.strerror)
@@ -1001,12 +1018,13 @@ class Svtplay():
             download_rtmp(options, test["url"])
         elif options.hls:
             download_hls(options, test["url"])
-        elif test["url"][len(test["url"])-3:len(test["url"])] == "f4m":
+        elif ".f4m" in test["url"]: 
             match = re.search("\/se\/secure\/", test["url"])
             if match:
                 log.error("This stream is encrypted. Use --hls option")
                 sys.exit(2)
-            manifest = "%s?hdcore=2.8.0&g=hejsan" % test["url"]
+            q = "&" if "?" in test['url'] else "?"
+            manifest = "%s%shdcore=2.11.3&g=hejsan" % (test["url"], q)
             download_hds(options, manifest, swf)
         else:
             download_http(options, test["url"])
