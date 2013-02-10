@@ -1085,6 +1085,24 @@ class Ruv(object):
         base_url = m3u8_url.rsplit("/", 1)[0]
         download_hls(options, m3u8_url, base_url)
 
+class ErrEE(object):
+    def handle(self, url):
+        return "etv.err.ee" in url
+
+    def get(self, options, url):
+        data = get_http_data(url)
+        match = re.search(r"loadFlow\(.*'(rtmp:[^']*)'.*'(mp4:[^']*)'", data)
+        try:
+            r = match.group(1)
+            y = match.group(2)
+        except AttributeError :
+            log.error("Could not find video source")
+            sys.exit(2)
+        else :
+            # live appears necessary here, at least for my local version of rtmpdump
+            options.other = "-v -y '%s'" % y
+            download_rtmp(options,r)
+
 def progressbar(total, pos, msg=""):
     """
     Given a total and a progress position, output a progress bar
@@ -1121,7 +1139,7 @@ def progressbar(total, pos, msg=""):
 
 def get_media(url, options):
     sites = [Aftonbladet(), Dr(), Expressen(), Hbo(), Justin(), Kanal5(), Kanal9(),
-             Nrk(), Qbrick(), Ruv(), Sr(), Svtplay(), Tv4play(), Urplay(), Viaplay()]
+             Nrk(), Qbrick(), Ruv(), Sr(), Svtplay(), Tv4play(), Urplay(), Viaplay(), ErrEE()]
     stream = None
     for i in sites:
         if i.handle(url):
