@@ -677,15 +677,19 @@ class Urplay():
         match = re.search('file=(.*)\&plugins', data)
         if match:
             path = "mp%s:%s" % (match.group(1)[-1], match.group(1))
-        else :
-            match = re.search(r"urPlayer.reloadSubtitle[(]'', '.*(mp4:.*.mp4/)'", data )
-            if match :
-                path = match.group(1)
-        if path:
             options.other = "-a ondemand -y %s" % path
             download_rtmp(options, "rtmp://streaming.ur.se/")
         else :
-            log.error("no video path found.")
+            match = re.search(r'file_flash: "([^"]*mp4)"', data)
+            if match :
+                path = match.group(1).replace("\\","")
+                data = get_http_data("http://130.242.59.74/loadbalancer.json")
+                data = json.loads( data )
+                url = "rtmp://%s/ondemand/%s" % ( data['redirect'], path )
+                options.other = ""
+                download_rtmp(options, url)
+            else :
+                log.error("no video path found.")
 
 class Qbrick():
     def handle(self, url):
