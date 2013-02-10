@@ -40,7 +40,7 @@ def get(url, options):
             data = get_http_data("http://130.242.59.74/loadbalancer.json")
             data = json.loads( data )
             url = "rtmp://%s/ondemand/%s" % ( data['redirect'], path )
-            options.other = ""
+            options.other = "-v"
             download_rtmp(options, url)
         else :
             log.error("no video path found.")
