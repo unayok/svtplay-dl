@@ -1032,6 +1032,11 @@ class Dr(object):
 
     def get(self, options, url):
         data = get_http_data(url)
+        host = re.search(r'rtmpHost:[ ]*"([^"]*)",', data)
+        if host :
+            host = "-n '%s'" % host.group(1).replace("rtmp://","")
+        else :
+            host = ""
         match = re.search(r'resource:[ ]*"([^"]*)",', data)
         resource_url = match.group(1)
         resource_data = get_http_data(resource_url)
@@ -1044,7 +1049,7 @@ class Dr(object):
         else:
             uri = select_quality(options, streams)
         # need -v ?
-        options.other = "-v -y '" + uri.replace("rtmp://vod.dr.dk/cms/", "") + "'"
+        options.other = host + " -v -y '" + uri.replace("rtmp://vod.dr.dk/cms/", "") + "'"
         download_rtmp(options, uri)
 
 class Ruv(object):
