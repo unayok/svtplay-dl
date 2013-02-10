@@ -13,7 +13,7 @@ This script works for:
 * di.se
 * dn.se
 * dr.dk
-* er.ee
+* err.ee
 * expressen.se
 * hbo.com
 * justin.tv
