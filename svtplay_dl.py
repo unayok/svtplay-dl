@@ -672,12 +672,20 @@ class Urplay():
         return "urplay.se" in url
 
     def get(self, options, url):
+        path = None
         data = get_http_data(url)
         match = re.search('file=(.*)\&plugins', data)
         if match:
             path = "mp%s:%s" % (match.group(1)[-1], match.group(1))
+        else :
+            match = re.search(r"urPlayer.reloadSubtitle[(]'', '.*(mp4:.*.mp4/)'", data )
+            if match :
+                path = match.group(1)
+        if path:
             options.other = "-a ondemand -y %s" % path
             download_rtmp(options, "rtmp://streaming.ur.se/")
+        else :
+            log.error("no video path found.")
 
 class Qbrick():
     def handle(self, url):
