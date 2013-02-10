@@ -15,9 +15,9 @@ def handle(url, options) :
     for name, handler in handlers.iteritems() :
         if handler(url, options) :
             log.info("handled by %s" % name)
-            break
-    else :
-        log.error("unhandled URL: " + url)
+            return True
+    log.error("unhandled URL: " + url)
+    return False
 
 def load_handlers(path = None):
     if not path :
